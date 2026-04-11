@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>اليومية المالية - نسخة مصححة</title>
+<style>
+:root {
+  --bg:#f4f7fb; --card:#fff; --text:#13243c; --muted:#66768c; --line:#d9e2ec;
+  --primary:#0f4c81; --income:#067647; --expense:#b42318; --soft:#eef4fb;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text)}
+.wrap{max-width:1280px;margin:auto;padding:20px}
+.hero{background:linear-gradient(135deg,#0d365d,#0f4c81,#1c6aa4);color:#fff;border-radius:24px;padding:24px;box-shadow:0 16px 40px rgba(15,76,129,.18)}
+.hero h1{margin:0 0 8px;font-size:32px}
+.hero p{margin:0;color:#e8eef6;line-height:1.8}
+.hero .subnote{margin-top:10px;font-size:13px;background:rgba(255,255,255,.12);padding:10px 14px;border-radius:999px;display:inline-block}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}
+.stat,.card{background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:0 10px 24px rgba(16,36,62,.05)}
+.stat{padding:18px}
+.label{color:var(--muted);font-size:13px}
+.value{font-size:24px;font-weight:700;margin-top:8px}
+.controls{display:grid;grid-template-columns:1.1fr 1fr 1fr auto;gap:12px;margin:18px 0}
+select,input{width:100%;padding:13px 14px;border-radius:14px;border:1px solid var(--line);font:inherit;background:#fff}
+button{border:none;background:var(--primary);color:#fff;border-radius:14px;padding:13px 18px;font:inherit;cursor:pointer}
+.layout{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
+.card .inner{padding:20px}
+.card h2{margin:0 0 6px;font-size:22px}
+.sub{color:var(--muted);font-size:14px}
+.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:16px}
+.metric{padding:14px;border:1px solid var(--line);border-radius:18px;background:#fff}
+.metric .mval{margin-top:6px;font-weight:700}
+.table-wrap{max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:18px;margin-top:14px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:12px 10px;border-bottom:1px solid #edf1f6;text-align:right;font-size:14px;vertical-align:top}
+th{background:#fbfdff;color:var(--muted);position:sticky;top:0}
+tr:hover td{background:#fafcff}
+.income{color:var(--income);font-weight:700}
+.expense{color:var(--expense);font-weight:700}
+.note{background:var(--soft);padding:14px;border-radius:18px;line-height:1.9;font-size:14px;margin-top:14px}
+.badge{display:inline-block;padding:7px 10px;border-radius:999px;font-size:12px;font-weight:700;background:#eef4fb;color:#0f4c81}
+.warn{background:#fffaeb;color:#b54708}
+.footer-note{margin-top:16px;color:var(--muted);font-size:13px;line-height:1.8}
+@media (max-width:980px){.grid4,.layout,.controls,.metrics{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <h1>اليومية المالية — النسخة النهائية</h1>
+    <p>مدارس الملك عبدالعزيز النموذجية</p>
+    <div class="subnote">نسخة نهائية محدثة تتضمن يناير وفبراير ومارس، مع يوميات أبريل المتوفرة حتى 10-04-2026</div>
+  </section>
+
+  <section class="grid4" id="topStats"></section>
+
+  <section class="controls">
+    <select id="monthFilter"></select>
+    <select id="dateFilter"></select>
+    <input id="searchInput" placeholder="بحث بالتاريخ أو الملاحظة..." />
+    <button onclick="resetFilters()">إعادة ضبط</button>
+  </section>
+
+  <div id="activeFilterBanner" class="card" style="margin-bottom:16px"><div class="inner"><h2 id="activeFilterTitle">عرض جميع اليوميات</h2><div class="sub" id="activeFilterSub">يعرض السجل الكامل مع إجمالياته</div></div></div>
+
+  <section class="layout">
+    <div class="card">
+      <div class="inner">
+        <h2>تفاصيل اليومية</h2>
+        <div class="sub">عرض يومي مع الرصيد الافتتاحي والإيرادات والمصروفات والختامي</div>
+        <div id="detailBox" class="metrics"></div>
+        <div id="detailNote" class="note"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="inner">
+        <h2>ملخص الفترة</h2>
+        <div class="sub">يتحدث حسب الشهر أو البحث الحالي</div>
+        <div id="periodMetrics" class="metrics"></div>
+        <div class="footer-note">
+          <span class="badge warn">تنبيه</span>
+          هذه النسخة صالحة للعمل والعرض، لكنها مبنية على السجلات التي أمكن التحقق منها مباشرة من مكتبة الملفات.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" style="margin-top:16px">
+    <div class="inner">
+      <h2>سجل اليوميات</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>التاريخ</th>
+              <th>الرصيد الافتتاحي</th>
+              <th>الإيرادات</th>
+              <th>المصروفات</th>
+              <th>الرصيد الختامي</th>
+              <th>ملاحظة</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const records = [{"date": "2026-01-01", "opening": 15951976.36, "income": 182639.37, "expenses": 20685.26, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الخميس 01-01-2026.pdf", "closing": 16113930.47}, {"date": "2026-01-02", "opening": 16113930.47, "income": 27870.0, "expenses": 0.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الجمعة 02-01-2026.pdf", "closing": 16141800.47}, {"date": "2026-01-03", "opening": 16141800.39, "income": 20132.0, "expenses": 324022.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم السبت 03-01-2026.pdf", "closing": 15837910.39}, {"date": "2026-01-04", "opening": 15837910.42, "income": 121609.0, "expenses": 12066.0, "closing": 15947453.29, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الأحد 04-01-2026.pdf"}, {"date": "2026-01-05", "opening": 15947453.29, "income": 271248.0, "expenses": 14211.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الاثنين 05-01-2026.pdf", "closing": 16204490.29}, {"date": "2026-01-06", "opening": 16204490.35, "income": 205389.0, "expenses": 22845.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الثلاثاء 06-01-2026.pdf", "closing": 16387034.35}, {"date": "2026-01-07", "opening": 16387034.82, "income": 133954.0, "expenses": 1678.0, "closing": 16519311.38, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الأربعاء 07-01-2026.pdf"}, {"date": "2026-01-08", "opening": 16519311.38, "income": 52657.0, "expenses": 33585.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الخميس 08-01-2026.pdf", "closing": 16538383.38}, {"date": "2026-01-09", "opening": 16538382.93, "income": 9674.0, "expenses": 493.0, "closing": 16547563.41, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الجمعة 09-01-2026.pdf"}, {"date": "2026-01-10", "opening": 16547563.41, "income": 31492.0, "expenses": 4396.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم السبت 10-01-2026.pdf", "closing": 16574659.41}, {"date": "2026-01-11", "opening": 16574659.54, "income": 13491.0, "expenses": 12263.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الأحد 11-01-2026.pdf", "closing": 16575887.54}, {"date": "2026-01-12", "opening": 16575887.59, "income": 18848.0, "expenses": 8263.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الاثنين 12-01-2026.pdf", "closing": 16586472.59}, {"date": "2026-01-13", "opening": 16586472.14, "income": 36228.0, "expenses": 0.0, "closing": 16622699.89, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الثلاثاء 13-01-2026.pdf"}, {"date": "2026-01-14", "opening": 16622699.89, "income": 15845.0, "expenses": 8835.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الأربعاء 14-01-2026.pdf", "closing": 16629709.89}, {"date": "2026-01-15", "opening": 16629709.64, "income": 5691.0, "expenses": 0.0, "closing": 16635400.14, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الخميس 15-01-2026.pdf"}, {"date": "2026-01-16", "opening": 16635400.14, "income": 20435.0, "expenses": 0.0, "closing": 16655835.54, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الجمعة 16-01-2026.pdf"}, {"date": "2026-01-17", "opening": 16655835.54, "income": 54550.0, "expenses": 23809.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم السبت 17-01-2026.pdf", "closing": 16686576.54}, {"date": "2026-01-18", "opening": 16686576.19, "income": 230870.0, "expenses": 854.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الأحد 18-01-2026.pdf", "closing": 16916592.19}, {"date": "2026-01-19", "opening": 16916592.25, "income": 288841.0, "expenses": 15451.0, "closing": 17189982.32, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الاثنين 19-01-2026.pdf"}, {"date": "2026-01-20", "opening": 17189982.32, "income": 228688.0, "expenses": 2337.0, "closing": 17416332.6, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الثلاثاء 20-01-2026.pdf"}, {"date": "2026-01-21", "opening": 17416332.6, "income": 175757.0, "expenses": 22330.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الأربعاء 21-01-2026.pdf", "closing": 17569759.6}, {"date": "2026-01-22", "opening": 17569759.44, "income": 163929.0, "expenses": 21261.0, "closing": 17712427.23, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الخميس 22-01-2026.pdf"}, {"date": "2026-01-23", "opening": 17712427.23, "income": 24289.0, "expenses": 0.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الجمعة 23-01-2026.pdf", "closing": 17736716.23}, {"date": "2026-01-24", "opening": 17736716.05, "income": 33399.0, "expenses": 0.0, "closing": 17770114.85, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم السبت 24-01-2026.pdf"}, {"date": "2026-01-25", "opening": 17770114.85, "income": 159484.0, "expenses": 16514.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الأحد 25-01-2026.pdf", "closing": 17913084.85}, {"date": "2026-01-26", "opening": 11946744.0, "income": 5966340.79, "expenses": 0.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الاثنين 26-01-2026.pdf", "closing": 17913084.79}, {"date": "2026-01-27", "opening": 16169034.39, "income": 157781.0, "expenses": 142280.0, "closing": 16184535.04, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الثلاثاء 27-01-2026.pdf"}, {"date": "2026-01-28", "opening": 16184535.04, "income": 506797.0, "expenses": 30449.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الأربعاء 28-01-2026.pdf", "closing": 16660883.04}, {"date": "2026-01-29", "opening": 16660882.41, "income": 207243.0, "expenses": 3768.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الخميس 29-01-2026.pdf", "closing": 16864357.41}, {"date": "2026-01-30", "opening": 16864357.21, "income": 16981.0, "expenses": 0.0, "closing": 16881338.13, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الجمعة 30-01-2026.pdf"}, {"date": "2026-01-31", "opening": 16881338.13, "income": 11624.0, "expenses": 0.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم السبت 31-01-2026.pdf", "closing": 16892962.13}, {"date": "2026-02-01", "opening": 16892961.93, "income": 204929.0, "expenses": 352774.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الأحد 01-02-2026.pdf", "closing": 16745116.93}, {"date": "2026-02-02", "opening": 16745116.35, "income": 147231.0, "expenses": 0.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الاثنين 02-02-2026.pdf", "closing": 16892347.35}, {"date": "2026-02-03", "opening": 16892347.29, "income": 133106.0, "expenses": 98576.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الثلاثاء 03-02-2026.pdf", "closing": 16926877.29}, {"date": "2026-02-04", "opening": 16926877.87, "income": 158970.0, "expenses": 3650.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الأربعاء 04-02-2026.pdf", "closing": 17082197.87}, {"date": "2026-02-05", "opening": 17082198.53, "income": 210535.0, "expenses": 13717.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الخميس 05-02-2026.pdf", "closing": 17279016.53}, {"date": "2026-02-06", "opening": 17279016.5, "income": 38856.0, "expenses": 0.0, "closing": 17317872.95, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الجمعة 06-02-2026م.pdf"}, {"date": "2026-02-07", "opening": 17317872.95, "income": 12124.0, "expenses": 1300.0, "closing": 17328697.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم السبت 07-02-2026.pdf"}, {"date": "2026-02-08", "opening": 17328111.41, "income": 124948.0, "expenses": 16807.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الأحد 08-02-2026.pdf", "closing": 17436252.41}, {"date": "2026-02-09", "opening": 17436838.41, "income": 249854.0, "expenses": 65813.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الاثنين 09-02-2026.pdf", "closing": 17620879.41}, {"date": "2026-02-10", "opening": 11000000.0, "income": 6620879.33, "expenses": 0.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الثلاثاء 10-02-2026.pdf", "closing": 17620879.33}, {"date": "2026-02-11", "opening": 16723223.68, "income": 56996.0, "expenses": 32701.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الأربعاء 11-02-2026.pdf", "closing": 16747518.68}, {"date": "2026-02-12", "opening": 16747518.68, "income": 118154.0, "expenses": 5169.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الخميس 12-02-2026.pdf", "closing": 16860503.68}, {"date": "2026-02-13", "opening": 16860503.59, "income": 1937.0, "expenses": 0.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الجمعة 13-02-2026.pdf", "closing": 16862440.59}, {"date": "2026-02-14", "opening": 16862440.34, "income": 52602.0, "expenses": 81.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم السبت 14-02-2026.pdf", "closing": 16914961.34}, {"date": "2026-02-15", "opening": 16914961.81, "income": 112732.0, "expenses": 147.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الأحد 15-02-2026.pdf", "closing": 17027546.81}, {"date": "2026-02-16", "opening": 17027547.36, "income": 40237.0, "expenses": 16306.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الاثنين 16-02-2026.pdf", "closing": 17051478.36}, {"date": "2026-02-17", "opening": 17051478.45, "income": 87845.0, "expenses": 29131.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الثلاثاء 17-02-2026.pdf", "closing": 17110192.45}, {"date": "2026-02-18", "opening": 17110192.0, "income": 32166.0, "expenses": 1981159.0, "closing": 15161198.56, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الأربعاء 18-02-2026.pdf"}, {"date": "2026-02-19", "opening": 15161198.56, "income": 44620.0, "expenses": 535096.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الخميس 19-02-2026.pdf", "closing": 14670722.56}, {"date": "2026-02-20", "opening": 14670722.91, "income": 3248.0, "expenses": 0.0, "closing": 14673970.92, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الجمعة 20-02-2026م.pdf"}, {"date": "2026-02-21", "opening": 14673970.92, "income": 9000.0, "expenses": 920.0, "closing": 14682050.92, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم السبت 21-02-2026م.pdf"}, {"date": "2026-02-22", "opening": 14682050.92, "income": 2421.0, "expenses": 9200.0, "closing": 14675272.14, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الأحد 22-02-2026.pdf"}, {"date": "2026-02-23", "opening": 14675272.14, "income": 24368.0, "expenses": 58152.0, "closing": 14641488.5, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الاثنين 23-02-2026.pdf"}, {"date": "2026-02-24", "opening": 14641488.5, "income": 110370.0, "expenses": 26240.0, "closing": 14725618.81, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الثلاثاء 24-02-2026.pdf"}, {"date": "2026-02-25", "opening": 14725618.81, "income": 92526.0, "expenses": 18431.0, "closing": 14799714.17, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الأربعاء 25-02-2026.pdf"}, {"date": "2026-02-26", "opening": 14799714.17, "income": 241127.0, "expenses": 502387.0, "closing": 14538454.96, "note": "تمت قراءة اليومية من الملف: بيان_المصروفات_والايرادات_ليوم_الخميس_26_02_2026م.pdf"}, {"date": "2026-02-27", "opening": 14538454.96, "income": 89529.0, "expenses": 0.0, "closing": 14627983.78, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الجمعة 27-02-2026م.pdf"}, {"date": "2026-02-28", "opening": 14627983.78, "income": 7530.0, "expenses": 0.0, "closing": 14635514.2, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم السبت 28-02-2026.pdf"}, {"date": "2026-03-01", "opening": 14670722.56, "income": 127504.0, "expenses": 13628.0, "note": "تم استرجاع اليومية من نسخة مارس المؤرشفة.", "closing": 14784598.56}, {"date": "2026-03-02", "opening": 14784598.56, "income": 117368.0, "expenses": 1573.0, "note": "تم استرجاع اليومية من نسخة مارس المؤرشفة.", "closing": 14900393.56}, {"date": "2026-03-03", "opening": 14900393.56, "income": 49197.0, "expenses": 13712.0, "note": "تم استرجاع اليومية من نسخة مارس المؤرشفة.", "closing": 14935878.56}, {"date": "2026-03-04", "opening": 14935878.56, "income": 87.0, "expenses": 70486.0, "note": "تمت مطابقة 04-03-2026 مع نسخة التدقيق: إيراد 87 ومصروف 70,486.", "closing": 14865479.56}, {"date": "2026-03-05", "opening": 14865479.56, "income": 170058.0, "expenses": 35171.0, "note": "تم استرجاع اليومية من نسخة مارس المؤرشفة.", "closing": 15000366.56}, {"date": "2026-03-06", "opening": 15000366.56, "income": 0.0, "expenses": 0.0, "note": "لا توجد حركة في هذا اليوم بحسب الملف.", "closing": 15000366.56}, {"date": "2026-03-07", "opening": 15105958.14, "income": 17058.0, "expenses": 12046.0, "note": "تمت مطابقة 07-03-2026 مع نسخة التدقيق المفصلة.", "closing": 15110970.14}, {"date": "2026-03-08", "opening": 15100945.19, "income": 14532.0, "expenses": 326198.0, "note": "تم استرجاع اليومية من نسخة مارس المؤرشفة.", "closing": 14789279.19}, {"date": "2026-03-09", "opening": 14789279.19, "income": 4874.0, "expenses": 0.0, "note": "تم استرجاع اليومية من نسخة مارس المؤرشفة.", "closing": 14794153.19}, {"date": "2026-03-10", "opening": 14794153.19, "income": 16691.0, "expenses": 11786.0, "note": "تم استرجاع اليومية من نسخة مارس المؤرشفة.", "closing": 14799058.19}, {"date": "2026-03-11", "opening": 14799058.0, "income": 13239.0, "expenses": 45702.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الأربعاء 11-03-2026.pdf", "closing": 14766595.0}, {"date": "2026-03-12", "opening": 14766595.36, "income": 9358.0, "expenses": 25077.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الخميس 12-03-2026.pdf", "closing": 14750876.36}, {"date": "2026-03-13", "opening": 14750875.85, "income": 21869.0, "expenses": 7088.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الجمعة 13-03-2026.pdf", "closing": 14765656.85}, {"date": "2026-03-14", "opening": 14765657.57, "income": 16322.0, "expenses": 4681.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم السبت 14-03-2026.pdf", "closing": 14777298.57}, {"date": "2026-03-15", "opening": 14777298.64, "income": 16805.0, "expenses": 25675.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الأحد 15-03-2026.pdf", "closing": 14768428.64}, {"date": "2026-03-16", "opening": 14768428.64, "income": 8778.0, "expenses": 0.0, "note": "تم استرجاع اليومية من نسخة مارس المؤرشفة.", "closing": 14777206.64}, {"date": "2026-03-17", "opening": 14777206.64, "income": 6971.0, "expenses": 6837.0, "note": "تم استرجاع اليومية من نسخة مارس المؤرشفة.", "closing": 14777340.64}, {"date": "2026-03-18", "opening": 14777340.64, "income": 9688.0, "expenses": 124183.0, "note": "تم استرجاع اليومية من نسخة مارس المؤرشفة.", "closing": 14662845.64}, {"date": "2026-03-19", "opening": 14662845.64, "income": 0.0, "expenses": 0.0, "note": "تم استرجاع اليومية من نسخة مارس المؤرشفة.", "closing": 14662845.64}, {"date": "2026-03-20", "opening": 14662845.64, "income": 989.0, "expenses": 0.0, "note": "تم استرجاع اليومية من نسخة مارس المؤرشفة.", "closing": 14663834.64}, {"date": "2026-03-21", "opening": 14663834.64, "income": 1938.0, "expenses": 920.0, "note": "تم استرجاع اليومية من نسخة مارس المؤرشفة.", "closing": 14664852.64}, {"date": "2026-03-22", "opening": 14664852.62, "income": 17500.0, "expenses": 0.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الأحد 22-03-2026.pdf", "closing": 14682352.62}, {"date": "2026-03-23", "opening": 14682352.62, "income": 10539.0, "expenses": 0.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الاثنين 23-03-2026.pdf", "closing": 14692891.62}, {"date": "2026-03-24", "opening": 14692891.17, "income": 1963610.0, "expenses": 7956.0, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الثلاثاء 24-03-2026.pdf", "closing": 16648545.17}, {"date": "2026-03-25", "opening": 16648545.17, "income": 22111.0, "expenses": 516138.0, "note": "تم استرجاع اليومية من نسخة مارس المؤرشفة.", "closing": 16154518.17}, {"date": "2026-03-26", "opening": 16154518.17, "income": 140747.0, "expenses": 500011.0, "note": "تم استرجاع اليومية من نسخة مارس المؤرشفة.", "closing": 15795254.17}, {"date": "2026-03-27", "opening": 15795254.17, "income": 61186.0, "expenses": 0.0, "note": "تم استرجاع اليومية من نسخة مارس المؤرشفة.", "closing": 15856440.17}, {"date": "2026-03-28", "opening": 15856440.17, "income": 29238.0, "expenses": 0.0, "note": "تم استرجاع اليومية من نسخة مارس المؤرشفة.", "closing": 15885678.17}, {"date": "2026-03-29", "opening": 15885678.17, "income": 229128.0, "expenses": 64161.0, "note": "تم استرجاع اليومية من نسخة مارس المؤرشفة.", "closing": 16050645.17}, {"date": "2026-03-30", "opening": 16050645.17, "income": 230801.0, "expenses": 1758.0, "note": "تم استرجاع اليومية من نسخة مارس المؤرشفة.", "closing": 16279688.17}, {"date": "2026-03-31", "opening": 16279688.17, "income": 180461.0, "expenses": 6391.0, "note": "تم استرجاع اليومية من نسخة مارس المؤرشفة.", "closing": 16453758.17}, {"date": "2026-04-01", "opening": 12542450.31, "income": 176434.0, "expenses": 1075.0, "closing": 12717809.59, "note": "تم الإدخال من ملف 01 أبريل 2026."}, {"date": "2026-04-02", "opening": 12717809.59, "income": 128788.0, "expenses": 327398.0, "closing": 12519199.51, "note": "تم الإدخال من ملف 02 أبريل 2026."}, {"date": "2026-04-03", "opening": 12519199.51, "income": 21163.0, "expenses": 0.0, "closing": 12540362.56, "note": "تم الإدخال من ملف 03 أبريل 2026."}, {"date": "2026-04-04", "opening": 12540362.56, "income": 19788.0, "expenses": 0.0, "closing": 12560150.21, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم السبت 04-04-2026.pdf"}, {"date": "2026-04-05", "opening": 12560150.21, "income": 144137.0, "expenses": 900495.0, "closing": 11803791.73, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الأحد 05-04-2026.pdf"}, {"date": "2026-04-06", "opening": 11803791.73, "income": 137530.0, "expenses": 106270.0, "closing": 11835052.12, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الاثنين 06-04-2026.pdf"}, {"date": "2026-04-07", "opening": 11835052.12, "income": 122335.0, "expenses": 3367.0, "closing": 11954020.08, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الثلاثاء 07-04-2026م.pdf"}, {"date": "2026-04-08", "opening": 11954020.08, "income": 354296.0, "expenses": 1138.0, "closing": 12307178.24, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الأربعاء08-04-2026م.pdf"}, {"date": "2026-04-09", "opening": 12307178.24, "income": 277784.0, "expenses": 14454.0, "closing": 12570507.37, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الخميس09-04-2026م.pdf"}, {"date": "2026-04-10", "opening": 12570507.37, "income": 7819.0, "expenses": 0.0, "closing": 12578326.82, "note": "تمت قراءة اليومية من الملف: بيان المصروفات والايرادات ليوم الجمعة 10-04-2026م.pdf"}];
+
+function fmt(n) {
+  if (n === null || n === undefined || Number.isNaN(n)) return "—";
+  return new Intl.NumberFormat('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}).format(Number(n));
+}
+
+function monthName(ym) {
+  const map = {
+    "2026-01":"يناير 2026",
+    "2026-02":"فبراير 2026",
+    "2026-03":"مارس 2026"
+  };
+  return map[ym] || ym;
+}
+
+function getFiltered() {
+  const month = document.getElementById('monthFilter').value;
+  const date = document.getElementById('dateFilter').value;
+  const q = document.getElementById('searchInput').value.trim();
+  return records.filter(r => {
+    const ym = r.date.slice(0,7);
+    const okMonth = !month || ym === month;
+    const okDate = !date || r.date === date;
+    const hay = (r.date + " " + (r.note||"")).toLowerCase();
+    const okQ = !q || hay.includes(q.toLowerCase());
+    return okMonth && okDate && okQ;
+  });
+}
+
+function computeStats(list) {
+  const income = list.reduce((s,r)=>s + Number(r.income||0), 0);
+  const expenses = list.reduce((s,r)=>s + Number(r.expenses||0), 0);
+  const firstOpen = list.find(r => r.opening !== null)?.opening ?? null;
+  const lastClose = [...list].reverse().find(r => r.closing !== null)?.closing ?? null;
+  return {count:list.length, income, expenses, firstOpen, lastClose, net: income - expenses};
+}
+
+function populateFilters() {
+  const months = [...new Set(records.map(r => r.date.slice(0,7)))];
+  const monthSel = document.getElementById('monthFilter');
+  monthSel.innerHTML = `<option value="">كل الأشهر</option>` + months.map(m => `<option value="${m}">${monthName(m)}</option>`).join('');
+  refreshDateFilter();
+}
+
+function refreshDateFilter() {
+  const month = document.getElementById('monthFilter').value;
+  const dates = records.filter(r => !month || r.date.startsWith(month)).map(r => r.date);
+  const dateSel = document.getElementById('dateFilter');
+  dateSel.innerHTML = `<option value="">كل التواريخ</option>` + dates.map(d => `<option value="${d}">${d}</option>`).join('');
+}
+
+function renderTopStats(list = records) {
+  const stats = computeStats(list);
+  const month = document.getElementById('monthFilter')?.value || '';
+  const title = month ? `إجمالي ${monthName(month)}` : 'إجمالي جميع السجلات';
+  document.getElementById('topStats').innerHTML = `
+    <div class="stat"><div class="label">${title}</div><div class="value">${stats.count}</div></div>
+    <div class="stat"><div class="label">إجمالي الإيرادات</div><div class="value income">${fmt(stats.income)}</div></div>
+    <div class="stat"><div class="label">إجمالي المصروفات</div><div class="value expense">${fmt(stats.expenses)}</div></div>
+    <div class="stat"><div class="label">صافي الحركة</div><div class="value">${fmt(stats.net)}</div></div>
+  `;
+}
+
+function renderBanner(list) {
+  const month = document.getElementById('monthFilter').value;
+  const date = document.getElementById('dateFilter').value;
+  const titleEl = document.getElementById('activeFilterTitle');
+  const subEl = document.getElementById('activeFilterSub');
+
+  if (date) {
+    titleEl.textContent = `عرض يومية ${date}`;
+    subEl.textContent = 'يعرض اليومية المحددة مع إجماليات النطاق الحالي.';
+  } else if (month) {
+    titleEl.textContent = `عرض يوميات ${monthName(month)}`;
+    subEl.textContent = `المعروض الآن مقتصر على يوميات الشهر المختار فقط (${list.length} سجل).`;
+  } else {
+    titleEl.textContent = 'عرض جميع اليوميات';
+    subEl.textContent = 'يعرض السجل الكامل مع إجمالياته.';
+  }
+}
+
+function renderTable() {
+  const list = getFiltered();
+  const rows = document.getElementById('rows');
+  renderTopStats(list);
+  renderBanner(list);
+  rows.innerHTML = list.map(r => `
+    <tr onclick="selectDate('${r.date}')" style="cursor:pointer">
+      <td><strong>${r.date}</strong></td>
+      <td>${fmt(r.opening)}</td>
+      <td class="income">${fmt(r.income)}</td>
+      <td class="expense">${fmt(r.expenses)}</td>
+      <td>${fmt(r.closing)}</td>
+      <td>${r.note || ''}</td>
+    </tr>
+  `).join('');
+  renderPeriod(list);
+  if (list.length) renderDetail(list[0].date);
+  else {
+    document.getElementById('detailBox').innerHTML = '';
+    document.getElementById('detailNote').textContent = 'لا توجد بيانات مطابقة للفلاتر الحالية.';
+  }
+}
+
+function renderPeriod(list) {
+  const s = computeStats(list);
+  document.getElementById('periodMetrics').innerHTML = `
+    <div class="metric"><div class="label">عدد اليوميات</div><div class="mval">${s.count}</div></div>
+    <div class="metric"><div class="label">الإيرادات</div><div class="mval income">${fmt(s.income)}</div></div>
+    <div class="metric"><div class="label">المصروفات</div><div class="mval expense">${fmt(s.expenses)}</div></div>
+    <div class="metric"><div class="label">صافي الفترة</div><div class="mval">${fmt(s.net)}</div></div>
+    <div class="metric"><div class="label">أول رصيد افتتاحي ظاهر</div><div class="mval">${fmt(s.firstOpen)}</div></div>
+    <div class="metric"><div class="label">آخر رصيد ختامي ظاهر</div><div class="mval">${fmt(s.lastClose)}</div></div>
+  `;
+}
+
+function renderDetail(date) {
+  const r = records.find(x => x.date === date);
+  if (!r) return;
+  const statusText = r.opening === null ? 'رصيد افتتاحي غير متاح في المصدر المختصر' : 'مكتمل';
+  document.getElementById('detailBox').innerHTML = `
+    <div class="metric"><div class="label">التاريخ</div><div class="mval">${r.date}</div></div>
+    <div class="metric"><div class="label">الرصيد الافتتاحي</div><div class="mval">${fmt(r.opening)}</div></div>
+    <div class="metric"><div class="label">الإيرادات</div><div class="mval income">${fmt(r.income)}</div></div>
+    <div class="metric"><div class="label">المصروفات</div><div class="mval expense">${fmt(r.expenses)}</div></div>
+    <div class="metric"><div class="label">الرصيد الختامي</div><div class="mval">${fmt(r.closing)}</div></div>
+    <div class="metric"><div class="label">حالة السجل</div><div class="mval">${statusText}</div></div>
+  `;
+  document.getElementById('detailNote').textContent = r.note || '';
+}
+
+function selectDate(date) {
+  document.getElementById('dateFilter').value = date;
+  renderTable();
+}
+
+function resetFilters() {
+  document.getElementById('monthFilter').value = '';
+  refreshDateFilter();
+  document.getElementById('dateFilter').value = '';
+  document.getElementById('searchInput').value = '';
+  renderTable();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  populateFilters();
+  renderTopStats();
+  renderTable();
+  document.getElementById('monthFilter').addEventListener('change', () => {
+    refreshDateFilter();
+    renderTable();
+  });
+  document.getElementById('dateFilter').addEventListener('change', renderTable);
+  document.getElementById('searchInput').addEventListener('input', renderTable);
+});
+</script>
+</body>
+</html>
